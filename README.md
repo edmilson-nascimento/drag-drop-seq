@@ -1,4 +1,4 @@
-# drag-drop-seq
+# drag drop seq
 
 Sequencia para ordenação de itens
 +
