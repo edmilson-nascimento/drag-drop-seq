@@ -1,11 +1,7 @@
 REPORT x.
 
-
-TABLES:
-  aufk, afko.
-
 CLASS application DEFINITION DEFERRED.
-CLASS lcl_local_class DEFINITION DEFERRED.
+CLASS local_class DEFINITION DEFERRED.
 
 TYPES:
   ty_out  TYPE zca_s_quermesse_prioridades,
@@ -25,7 +21,7 @@ DATA: gv_move_row       TYPE char1 VALUE 'X',
 CLASS application DEFINITION.
 
   PUBLIC SECTION.
-    " methods for D&D handling
+
     METHODS handle_grid_drag
         FOR EVENT ondrag OF cl_gui_alv_grid
       IMPORTING
@@ -77,8 +73,6 @@ CLASS application IMPLEMENTATION.
     DATA:
       data_object TYPE REF TO drag_drop_object .
 
-*    READ TABLE gt_outtab_display INTO data(ls_help_row) INDEX es_row_no-row_id.
-
     data_object = NEW #( ).
     IF ( data_object IS NOT BOUND ) .
       RETURN .
@@ -102,10 +96,9 @@ CLASS application IMPLEMENTATION.
       data_object ?= e_dragdropobj->object.
 
       IF e_dragdropobj->effect = cl_dragdrop=>move.
-        " if you only want to put one row to another place in the table
+
         IF gv_move_row = abap_true.
-*         DELETE gt_outtab_display INDEX data_object->index.
-*         INSERT data_object->wa_test INTO gt_outtab_display INDEX e_row-index.
+
           me->update_table( EXPORTING im_old_index = data_object->index
                                       im_new_index = e_row-index
                                       im_line      = data_object->wa_test
@@ -115,14 +108,17 @@ CLASS application IMPLEMENTATION.
       ENDIF.
 
     ENDCATCH.
+
   ENDMETHOD.
 
   METHOD handle_grid_drop_complete.
+
     grid->refresh_table_display( ).
 
     IF sy-subrc <> 0.
       e_dragdropobj->abort( ).
     ENDIF.
+
   ENDMETHOD.
 
 
@@ -169,7 +165,7 @@ CLASS application IMPLEMENTATION.
 ENDCLASS.
 
 
-CLASS lcl_local_class DEFINITION.
+CLASS local_class DEFINITION.
 
   PUBLIC SECTION.
 
@@ -182,13 +178,16 @@ CLASS lcl_local_class DEFINITION.
 
     METHODS display_alv.
 
+    CLASS-METHODS status_0100 .
+    CLASS-METHODS user_command .
+
   PRIVATE SECTION.
     DATA out_tab TYPE zca_t_quermesse_prioridades.
 
 ENDCLASS.
 
 
-CLASS lcl_local_class IMPLEMENTATION.
+CLASS local_class IMPLEMENTATION.
 
   METHOD search.
 
@@ -222,21 +221,57 @@ CLASS lcl_local_class IMPLEMENTATION.
 
   METHOD display_alv.
   ENDMETHOD.
-
-ENDCLASS.
-*&---------------------------------------------------------------------*
-*&      Module  STATUS_0100  OUTPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE status_0100 OUTPUT.
-
+  
+  
+  METHOD status_0100 .
+  
   SET PF-STATUS 'STATUS_0100' OF PROGRAM 'BCALV_TEST_DRAG_DROP_02'.
   SET TITLEBAR  'STATUS_0100' OF PROGRAM 'BCALV_TEST_DRAG_DROP_02'.
 
   IF grid IS INITIAL.
     PERFORM create_controls.
   ENDIF.
+    
+  ENDMETHOD .
+
+
+  METHOD user_command .
+
+
+    CLEAR ok_code.
+
+    CASE save_ok_code.
+
+      WHEN 'EXIT' OR 'BACK'.
+        IF container IS NOT INITIAL.
+          container->free( EXCEPTIONS cntl_system_error = 1
+                                      cntl_error        = 2 ).
+          IF sy-subrc <> 0.
+          ENDIF.
+          cl_gui_cfw=>flush( EXCEPTIONS cntl_system_error = 1
+                                        cntl_error        = 2 ).
+          IF sy-subrc <> 0.
+          ENDIF.
+          IF save_ok_code = 'EXIT'.
+            LEAVE PROGRAM.
+          ELSE.
+            CALL SELECTION-SCREEN 1000.
+          ENDIF.
+        ENDIF.
+
+    ENDCASE.
+
+    CLEAR save_ok_code.
+
+  ENDMETHOD .
+
+ENDCLASS.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+
+  local_class=>status_0100( ) .
 
 ENDMODULE.
 
@@ -247,29 +282,31 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE user_command_0100 INPUT.
 
-  save_ok_code = ok_code.
-  CLEAR ok_code.
+  local_class=>user_command( ) .
 
-  CASE save_ok_code.
-    WHEN 'EXIT' OR 'BACK'.
-      IF container IS NOT INITIAL.
-        container->free( EXCEPTIONS cntl_system_error = 1
-                                    cntl_error        = 2 ).
-        IF sy-subrc <> 0.
-        ENDIF.
-        cl_gui_cfw=>flush( EXCEPTIONS cntl_system_error = 1
-                                      cntl_error        = 2 ).
-        IF sy-subrc <> 0.
-        ENDIF.
-        IF save_ok_code = 'EXIT'.
-          LEAVE PROGRAM.
-        ELSE.
-          CALL SELECTION-SCREEN 1000.
-        ENDIF.
-      ENDIF.
-  ENDCASE.
-
-  CLEAR save_ok_code.
+*  save_ok_code = ok_code.
+*  CLEAR ok_code.
+*
+*  CASE save_ok_code.
+*    WHEN 'EXIT' OR 'BACK'.
+*      IF container IS NOT INITIAL.
+*        container->free( EXCEPTIONS cntl_system_error = 1
+*                                    cntl_error        = 2 ).
+*        IF sy-subrc <> 0.
+*        ENDIF.
+*        cl_gui_cfw=>flush( EXCEPTIONS cntl_system_error = 1
+*                                      cntl_error        = 2 ).
+*        IF sy-subrc <> 0.
+*        ENDIF.
+*        IF save_ok_code = 'EXIT'.
+*          LEAVE PROGRAM.
+*        ELSE.
+*          CALL SELECTION-SCREEN 1000.
+*        ENDIF.
+*      ENDIF.
+*  ENDCASE.
+*
+*  CLEAR save_ok_code.
 
 ENDMODULE.
 
@@ -331,9 +368,9 @@ INITIALIZATION.
 
 START-OF-SELECTION.
 
-  DATA go_alv_salv TYPE REF TO lcl_local_class.
+  DATA go_alv_salv TYPE REF TO local_class.
 
-  go_alv_salv = NEW lcl_local_class( ).
+  go_alv_salv = NEW local_class( ).
 
   IF ( go_alv_salv IS BOUND ).
 
