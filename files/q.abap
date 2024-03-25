@@ -2,7 +2,6 @@ REPORT x.
 
 CLASS application DEFINITION DEFERRED.
 CLASS local_class DEFINITION DEFERRED.
-CLASS local_class DEFINITION DEFERRED.
 
 TYPES:
   ty_out  TYPE zca_s_quermesse_prioridades,
@@ -23,7 +22,6 @@ DATA:
 CLASS application DEFINITION.
 
   PUBLIC SECTION.
-
 
     METHODS handle_grid_drag
         FOR EVENT ondrag OF cl_gui_alv_grid
@@ -100,9 +98,7 @@ CLASS application IMPLEMENTATION.
 
       IF e_dragdropobj->effect = cl_dragdrop=>move.
 
-
         IF gv_move_row = abap_true.
-
 
           me->update_table( EXPORTING im_old_index = data_object->index
                                       im_new_index = e_row-index
@@ -114,18 +110,15 @@ CLASS application IMPLEMENTATION.
 
     ENDCATCH.
 
-
   ENDMETHOD.
 
   METHOD handle_grid_drop_complete.
-
 
     grid->refresh_table_display( ).
 
     IF sy-subrc <> 0.
       e_dragdropobj->abort( ).
     ENDIF.
-
 
   ENDMETHOD.
 
@@ -174,7 +167,6 @@ ENDCLASS.
 
 
 CLASS local_class DEFINITION.
-CLASS local_class DEFINITION.
 
   PUBLIC SECTION.
 
@@ -188,9 +180,6 @@ CLASS local_class DEFINITION.
 
     "! <p class="shorttext synchronized" lang="pt">TODO</p>
     METHODS display_alv.
-
-    CLASS-METHODS status_0100 .
-    CLASS-METHODS user_command .
 
     "! <p class="shorttext synchronized" lang="pt">Set Status e config iniciais</p>
     CLASS-METHODS status_0100 .
@@ -211,7 +200,6 @@ CLASS local_class DEFINITION.
 ENDCLASS.
 
 
-CLASS local_class IMPLEMENTATION.
 CLASS local_class IMPLEMENTATION.
 
   METHOD search.
@@ -246,12 +234,6 @@ CLASS local_class IMPLEMENTATION.
 
   METHOD display_alv.
   ENDMETHOD.
-  
-  
-  METHOD status_0100 .
-  
-  SET PF-STATUS 'STATUS_0100' OF PROGRAM 'BCALV_TEST_DRAG_DROP_02'.
-  SET TITLEBAR  'STATUS_0100' OF PROGRAM 'BCALV_TEST_DRAG_DROP_02'.
 
 
   METHOD status_0100 .
@@ -259,95 +241,6 @@ CLASS local_class IMPLEMENTATION.
     SET PF-STATUS 'STATUS_0100' OF PROGRAM 'BCALV_TEST_DRAG_DROP_02'.
     SET TITLEBAR  'STATUS_0100' OF PROGRAM 'BCALV_TEST_DRAG_DROP_02'.
 
-  IF grid IS INITIAL.
-    PERFORM create_controls.
-  ENDIF.
-    
-  ENDMETHOD .
-
-
-  METHOD user_command .
-
-
-    CLEAR ok_code.
-
-    CASE save_ok_code.
-
-      WHEN 'EXIT' OR 'BACK'.
-        IF container IS NOT INITIAL.
-          container->free( EXCEPTIONS cntl_system_error = 1
-                                      cntl_error        = 2 ).
-          IF sy-subrc <> 0.
-          ENDIF.
-          cl_gui_cfw=>flush( EXCEPTIONS cntl_system_error = 1
-                                        cntl_error        = 2 ).
-          IF sy-subrc <> 0.
-          ENDIF.
-          IF save_ok_code = 'EXIT'.
-            LEAVE PROGRAM.
-          ELSE.
-            CALL SELECTION-SCREEN 1000.
-          ENDIF.
-        ENDIF.
-
-    ENDCASE.
-
-    CLEAR save_ok_code.
-
-  ENDMETHOD .
-
-ENDCLASS.
-*&---------------------------------------------------------------------*
-*&      Module  STATUS_0100  OUTPUT
-*&---------------------------------------------------------------------*
-MODULE status_0100 OUTPUT.
-
-  local_class=>status_0100( ) .
-
-ENDMODULE.
-
-*&---------------------------------------------------------------------*
-*&      Module  USER_COMMAND_0100  INPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE user_command_0100 INPUT.
-
-  local_class=>user_command( ) .
-
-*  save_ok_code = ok_code.
-*  CLEAR ok_code.
-*
-*  CASE save_ok_code.
-*    WHEN 'EXIT' OR 'BACK'.
-*      IF container IS NOT INITIAL.
-*        container->free( EXCEPTIONS cntl_system_error = 1
-*                                    cntl_error        = 2 ).
-*        IF sy-subrc <> 0.
-*        ENDIF.
-*        cl_gui_cfw=>flush( EXCEPTIONS cntl_system_error = 1
-*                                      cntl_error        = 2 ).
-*        IF sy-subrc <> 0.
-*        ENDIF.
-*        IF save_ok_code = 'EXIT'.
-*          LEAVE PROGRAM.
-*        ELSE.
-*          CALL SELECTION-SCREEN 1000.
-*        ENDIF.
-*      ENDIF.
-*  ENDCASE.
-*
-*  CLEAR save_ok_code.
-
-ENDMODULE.
-
-" ----------------------------------------------------------------------
-" Subroutines
-" ----------------------------------------------------------------------
-FORM create_controls.
-  container = NEW #( dynnr     = '100'
-                     extension = 312
-                     side      = cl_gui_docking_container=>dock_at_top ).
     IF grid IS INITIAL.
       local_class=>create_controls( ).
     ENDIF.
@@ -464,9 +357,6 @@ INITIALIZATION.
 
 START-OF-SELECTION.
 
-  DATA go_alv_salv TYPE REF TO local_class.
-
-  go_alv_salv = NEW local_class( ).
   DATA(go_alv_salv) = NEW local_class( ).
 
   IF ( go_alv_salv IS BOUND ).
